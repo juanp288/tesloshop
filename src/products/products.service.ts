@@ -138,7 +138,15 @@ export class ProductsService {
     );
   }
 
-  async deleteAllProducts() {}
+  async deleteAllProducts() {
+    const query = this.productRepo.createQueryBuilder('product');
+
+    try {
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
 
   private async initQueryRunner(dataSource = this.dataSource) {
     // Create QueryRunner
