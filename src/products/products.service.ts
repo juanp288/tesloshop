@@ -8,16 +8,18 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { validate as isUUID } from 'uuid';
 import { Product, ProducImage } from './entities';
+import { PlainProduct } from './interfaces/plain-product.interface';
 
 @Injectable()
 export class ProductsService {
   private readonly logger = new Logger('ProductsService');
 
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
     @InjectRepository(ProducImage)
@@ -80,7 +82,7 @@ export class ProductsService {
     }
   }
 
-  async findOnePlain(term: string) {
+  async findOnePlain(term: string): Promise<PlainProduct> {
     const { images = [], ...product } = await this.findOne(term);
     return {
       ...product,
@@ -89,15 +91,31 @@ export class ProductsService {
   }
 
   async update(id: string, data: UpdateProductDto) {
-    const product = await this.productRepo.preload({
-      id: id,
-      ...data,
-      images: [],
-    });
+    const { images, ...toUpdate } = data;
+
+    const product = await this.productRepo.preload({ id, ...toUpdate });
+    if (!product) throw new NotFoundException('Product to Update not found');
+
+    const queryRunner = await this.initQueryRunner();
 
     try {
-      return this.productRepo.save(product);
+      if (images) {
+        await queryRunner.manager.delete(ProducImage, { product: { id } });
+
+        product.images = images.map((img) =>
+          this.productImgsRepo.create({ url: img }),
+        );
+      }
+
+      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
+      return this.findOnePlain(id);
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+
       this.handleDBExceptions(error);
     }
   }
@@ -105,7 +123,7 @@ export class ProductsService {
   async remove(id: string) {
     try {
       const product = await this.findOne(id);
-      return await this.productRepo.remove(product);
+      await this.productRepo.remove(product);
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -118,5 +136,17 @@ export class ProductsService {
     throw new InternalServerErrorException(
       `${error.detail} with code ${error.code}`,
     );
+  }
+
+  async deleteAllProducts() {}
+
+  private async initQueryRunner(dataSource = this.dataSource) {
+    // Create QueryRunner
+    // En el QueryRunner se establecen una serie de pasos que se ejecutaran en la base cuando se ejecute el commit.
+    const queryRunner = dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    return queryRunner;
   }
 }
