@@ -15,7 +15,7 @@ import { AuthModule } from './auth/auth.module';
   imports: [
     CommonModule,
     ConfigModule.forRoot({
-      load: [EnvConfiguration],
+      // load: [EnvConfiguration],
       validationSchema: JoiValidationSchema,
     }),
     TypeOrmModule.forRoot({
