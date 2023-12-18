@@ -11,7 +11,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-    private readonly config: ConfigService,
+    config: ConfigService,
   ) {
     super({
       secretOrKey: config.get('JWT_SECRET'),
@@ -19,15 +19,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<any> {
-    const { email } = payload;
+  async validate(payload: JwtPayload): Promise<User> {
+    const { id } = payload;
 
-    const user = await this.userRepo.findOneBy({ email });
+    const user = await this.userRepo.findOneBy({ id });
 
     if (!user) throw new UnauthorizedException('Token not valid');
-    if (!user.isActive)
-      throw new UnauthorizedException('User is inactive, notify an admin');
+    if (!user.isActive) throw new UnauthorizedException('User is inactive');
 
-    return;
+    return user;
   }
 }

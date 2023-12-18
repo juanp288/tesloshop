@@ -30,7 +30,7 @@ export class AuthService {
 
       await this.userRepo.save(user);
 
-      return { ...user, token: this.getJwtToken({ email: user.email }) };
+      return { ...user, token: this.getJwtToken({ id: user.id }) };
     } catch (error) {
       this.handlerDbErrors(error);
     }
@@ -40,7 +40,7 @@ export class AuthService {
     const { email, password } = data;
 
     const user = await this.userRepo.findOne({
-      select: { email: true, password: true },
+      select: { id: true, email: true, password: true },
       where: { email },
     });
 
@@ -49,24 +49,8 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       if (!user) throw new UnauthorizedException('Check yours credentials');
 
-    return { ...user, token: this.getJwtToken({ email: user.email }) };
+    return { ...user, token: this.getJwtToken({ id: user.id }) };
   }
-
-  // findAll() {
-  //   return `This action returns all auth`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} auth`;
-  // }
-
-  // update(id: number, updateAuthDto: UpdateAuthDto) {
-  //   return `This action updates a #${id} auth`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} auth`;
-  // }
 
   private getJwtToken(payload: JwtPayload) {
     return this.jwtService.sign(payload);
