@@ -13,49 +13,40 @@ export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'text',
+  @Column('text', {
     unique: true,
   })
   title: string;
 
-  @Column({
-    type: 'float',
+  @Column('float', {
     default: 0,
   })
   price: number;
 
-  @Column({
-    type: 'text',
+  @Column('text', {
     nullable: true,
   })
   description: string;
 
-  @Column({
-    type: 'text',
+  @Column('text', {
     unique: true,
   })
   slug: string;
 
-  @Column({
-    type: 'int',
+  @Column('int', {
     default: 0,
   })
   stock: number;
 
-  @Column({
-    type: 'text',
+  @Column('text', {
     array: true,
   })
   sizes: string[];
 
-  @Column({
-    type: 'text',
-  })
+  @Column('text', {})
   gender: string;
 
-  @Column({
-    type: 'text',
+  @Column('text', {
     array: true,
     default: [],
   })
