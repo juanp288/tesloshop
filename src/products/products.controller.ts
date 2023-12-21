@@ -15,18 +15,24 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { Auth, GetUser } from 'src/auth/decorators';
 import { User } from 'src/auth/entities/user.entity';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ValidRoles } from 'src/auth/interfaces/valid-roles.interface';
 
+@ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @ApiBearerAuth()
   @Post()
   @Auth()
   create(@GetUser() user: User, @Body() data: CreateProductDto) {
     return this.productsService.create(data, user);
   }
 
+  @ApiBearerAuth()
   @Get()
+  @Auth(ValidRoles.user)
   findAll(@Query() pags: PaginationDto) {
     return this.productsService.findAll(pags);
   }
@@ -36,7 +42,9 @@ export class ProductsController {
     return this.productsService.findOnePlain(term);
   }
 
+  @ApiBearerAuth()
   @Patch(':id')
+  @Auth(ValidRoles.user)
   update(
     @GetUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,

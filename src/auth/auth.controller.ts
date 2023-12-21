@@ -9,7 +9,9 @@ import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces/valid-roles.interface';
 import { Auth } from './decorators';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -24,6 +26,7 @@ export class AuthController {
     return this.authService.login(data);
   }
 
+  @ApiBearerAuth()
   @Get('check-status')
   @Auth()
   checkAuthStatus(@GetUser() user: User) {
@@ -31,7 +34,7 @@ export class AuthController {
   }
 
   @Get('private')
-  @UseGuards(AuthGuard())
+  @Auth(ValidRoles.admin)
   testingPrivateRoute(
     @GetUser() user: User,
     @GetUser('email') userEmail: string,
@@ -44,26 +47,6 @@ export class AuthController {
       user,
       userEmail,
       requestInfo: { headers: rawHeaders },
-    };
-  }
-
-  // @SetMetadata('roles', ['admin', 'super-user']) // Another Way
-  @Get('private2')
-  @RoleProtected(ValidRoles.admin, ValidRoles.superUser)
-  @UseGuards(AuthGuard(), UserRoleGuard)
-  testingPrivateRoute2(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
-
-  @Get('private3')
-  @Auth(ValidRoles.user)
-  testingPrivateRoute3(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
     };
   }
 }
