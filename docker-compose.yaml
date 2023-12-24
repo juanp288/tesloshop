@@ -9,8 +9,6 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    command: >
-      -c "sed -i 's/scram-sha-256/md5/' /var/lib/postgresql/data/pg_hba.conf"
     container_name: teslodb
     volumes:
       - ./postgres:/var/lib/postgresql/data
